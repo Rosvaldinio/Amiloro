@@ -90,7 +90,7 @@ int to_number(char *val);
 int main(int argc, char* argv[])
 {
 	//opens the configuration file
-	FILE *conf_file = fopen("mai.conf", "r");
+	FILE *conf_file = fopen("amiloro.conf", "r");
 	
 	if (!conf_file)
 	{
