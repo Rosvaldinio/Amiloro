@@ -83,14 +83,20 @@ int position(char *line, FILE *fd);
 //only works for unsigned integers
 int to_number(char *val);
 
+//returns the path to the main config file
+char *get_config_dir();
+
 //*****************
 //THE MAIN FUNCTION
 //*****************
 
 int main(int argc, char* argv[])
 {
+	char *config_dir = get_config_dir();
+	
 	//opens the configuration file
-	FILE *conf_file = fopen("amiloro.conf", "r");
+	FILE *conf_file = fopen(config_dir, "r");
+	free(config_dir);
 	
 	if (!conf_file)
 	{
@@ -363,5 +369,32 @@ int to_number(char *val)
 		}
 		result = (result * 10) + (val[i] - '0');
 	}
+	return result;
+}
+
+char *get_config_dir()
+{
+	char *result = (char*)malloc(sizeof(char) * 200);
+	char *path = getenv("XDG_CONFIG_HOME");
+	if (!path)
+	{
+		path = getenv("HOME");
+		if (!path)
+		{
+			perror("unable to find the config file, sorry ;p\n");
+			exit(7);
+		}
+		else
+		{
+			strcpy(result, path);
+			strcat(result, "/.config/amiloro/amiloro.conf");
+		}
+	}
+	else
+	{
+		strcpy(result, path);
+		strcat(result, "/amiloro/amiloro.conf");
+	}
+	
 	return result;
 }
