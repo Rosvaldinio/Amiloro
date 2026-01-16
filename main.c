@@ -86,6 +86,10 @@ int to_number(char *val);
 //returns the path to the main config file
 char *get_config_dir();
 
+int get_number_of_lines_with_begining(FILE *readable, char *match);
+
+void count_number_of_lines_with_begining_after(FILE *readable, char *match, char *after, int *buffer);
+
 //*****************
 //THE MAIN FUNCTION
 //*****************
@@ -104,22 +108,28 @@ int main(int argc, char* argv[])
 		return 3;
 	}
 	
+	int space_for_files = get_number_of_lines_with_begining(conf_file, "at ");
+	int *space_for_lines = (int*)malloc(sizeof(int) * space_for_files);
+	count_number_of_lines_with_begining_after(conf_file, "line", "at", space_for_lines);
+	
 	//initializes the configuration
 	//and allocates memory for the
 	//animated files to be stored in
 	config configuration;
 	configuration.file_num = 0;
-	configuration.files = (file*)malloc(sizeof(file) * 5);
-	for (int i = 0; i < 5; i++)
+	configuration.files = (file*)malloc(sizeof(file) * space_for_files);
+	for (int i = 0; i < space_for_files; i++)
 	{	
 		configuration.files[i].line_num = 0;
 		configuration.files[i].path = (char*)malloc(sizeof(char) * 100);
-		configuration.files[i].lines = (char**)malloc(sizeof(char*) * 3);
-		for (int j = 0; j < 3; j++)
+		configuration.files[i].lines = (char**)malloc(sizeof(char*) * space_for_lines[i]);
+		for (int j = 0; j < space_for_lines[i]; j++)
 		{
 			configuration.files[i].lines[j] = (char*)malloc(sizeof(char) * 100);
 		}
 	}
+	free(space_for_lines);
+	fseek(conf_file, 0, SEEK_SET);
 	
 	//reads the config file and stores the
 	//values of variables in the configuration
@@ -166,13 +176,12 @@ int main(int argc, char* argv[])
 				}
 			}
 		}
-		
+	
 		if (!keyword || !value)
 		{
 			perror("no valid value or keyword, sorry ;p\n");
 			return 4;
 		}
-		
 		
 		if(strcmp(keyword, "update") == 0)
 		{
@@ -207,6 +216,7 @@ int main(int argc, char* argv[])
 			return 5;
 		}
 	}
+	
 	fclose(conf_file);
 	
 	//animates the hexcode changes
@@ -270,6 +280,62 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
+void count_number_of_lines_with_begining_after(FILE *readable, char *match, char *after, int *buffer)
+{
+	fseek(readable, 0, SEEK_SET);
+	char line[150], copy[10], flags = 0;
+	int count = 0, index = 0;
+	while (fgets(line, 150, readable))
+	{
+		int i = 0, j = 0;
+		while(line[i] == ' ')
+		{i++;}
+		while(line[i] != ' ')
+		{
+			copy[j++] = line[i++];
+		}
+		copy[j] = '\0';
+		if (strcmp(copy, after) == 0)
+		{
+			if (flags)
+			{
+				index++;
+			}
+			flags = 1;
+			count = 0;
+		}
+		else if (strcmp(copy, match) == 0 && flags)
+		{
+			count++;
+			buffer[index] = count;
+		}
+	}
+}
+
+int get_number_of_lines_with_begining(FILE *readable, char *match)
+{
+	char line[150];
+	int result = 0, skip = 0;
+	while (fgets(line, 150, readable))
+	{
+		for (int i = 0; match[i] != '\0'; i++)
+		{
+			if (line[i] != match[i])
+			{
+				skip = 1;
+				break;
+			}
+		}
+		if (skip)
+		{
+			skip = 0;
+			continue;
+		}
+		result++;
+	}
+	return result;
+}
+	
 char *hsv_to_hex(uint16_t h, uint8_t s, uint8_t v)
 {
 	uint8_t *rgb = get_rgb(h, s, v);
