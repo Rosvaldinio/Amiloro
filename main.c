@@ -224,13 +224,12 @@ int main(int argc, char* argv[])
 	//configuration files
 	uint16_t h;
 	char *hex;
+	int acumilator = 0;
 	while (1)
 	{
-		time_t t = time(NULL);
-		struct tm *tmp = gmtime(&t);
-		int time = tmp->tm_sec;
-		int mod = time % configuration.cycle;
-		float prop = (float)mod/(float)configuration.cycle;
+		acumilator = acumilator % configuration.cycle;
+		float prop = (float)acumilator/(float)configuration.cycle;
+		acumilator = acumilator + configuration.update;
 		
 		h = (uint16_t)(360.0 * prop);
 		hex = hsv_to_hex(h, configuration.saturation, configuration.value);
